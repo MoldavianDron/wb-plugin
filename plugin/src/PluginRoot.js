@@ -1,27 +1,47 @@
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 import { registerTemplate } from "@whiteboards-io/plugins";
-import helloImage from "./hello-img.webp";
+import weatherImage from "./weather-mops.jpeg";
 
 export default function PluginRoot() {
+  const [lat, setLat] = useState([]);
+  const [long, setLong] = useState([]);
+  const [data, setData] = useState([]);
+  
+  useEffect(() => {
+    const fetchData = async () => {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        setLat(position.coords.latitude);
+        setLong(position.coords.longitude);
+      });
+      
+      await fetch(`${process.env.REACT_APP_API_URL}/weather/?lat=${lat}&lon=${long}&units=metric&APPID=${process.env.REACT_APP_API_KEY}`)
+        .then(res => res.json())
+        .then(result => {
+          setData(result)
+        });
+    }
+    fetchData();
+  }, [lat,long]);
+  
   useEffect(() => {
     registerTemplate({
-      id: "hello-world",
+      id: "Weather",
       fixed: true,
-      title: "Hello World Template",
-      description: "This is a hello world template",
-      illustration: window.location.origin + helloImage,
+      title: "Weather template",
+      description: "This is a weather template",
+      illustration: window.location.origin + weatherImage,
       content: {
         cards: {
           _index: {
-            card1: true,
+            cardLocation: true,
           },
           _items: {
-            card1: {
+            cardLocation: {
               x: 0,
               y: 0,
-              width: 100,
-              height: 100,
-              text: "Hello world!",
+              width: 250,
+              height: 40,
+              text: `${typeof data.main != 'undefined' ? `${data.name}` : "Waiting for response"}`,
             },
           },
         },
